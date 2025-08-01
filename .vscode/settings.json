@@ -1,0 +1,22 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "terminal.integrated.defaultProfile.osx": "bash",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.defaultProfile.windows": "powershell",
+  "liveServer.settings.port": 3001,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/build": true,
+    "**/dist": true
+  },
+  "workbench.startupEditor": "readme",
+  "markdown.preview.scrollEditorWithPreview": true,
+  "markdown.preview.scrollPreviewWithEditor": true
+}

@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install Dependencies and Start Dev Server",
+      "type": "shell",
+      "command": "npm install && npm run dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Open in Browser",
+      "type": "shell",
+      "command": "sleep 5 && open http://localhost:3000",
+      "presentation": {
+        "reveal": "never"
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
