@@ -78,7 +78,15 @@ export default function Navigation() {
           <div className="hidden md:flex items-center gap-4">
             {/* Show buttons immediately on landing page or when not loading */}
             {session ? (
-              <div className="relative" ref={dropdownRef}>
+              <>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="flex items-center gap-2 text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/50 px-4 py-2 rounded-lg transition-all"
+                >
+                  <FaSignOutAlt />
+                  <span>Sign Out</span>
+                </button>
+                <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   className="flex items-center gap-2 bg-black/20 hover:bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white transition-colors"
@@ -145,6 +153,7 @@ export default function Navigation() {
                   </div>
                 )}
               </div>
+              </>
             ) : status === 'loading' && !isLandingPage ? (
               <div className="text-gray-300">Loading...</div>
             ) : (
