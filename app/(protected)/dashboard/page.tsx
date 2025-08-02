@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { 
   FaGamepad, 
   FaSignOutAlt, 
@@ -25,6 +25,7 @@ import {
   FaChevronDown
 } from 'react-icons/fa';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ProfileData {
   customImage?: string;
@@ -40,23 +41,13 @@ export default function Dashboard() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log('Dashboard - Auth status:', status);
-    console.log('Dashboard - Session:', session);
-    
     if (status === 'unauthenticated') {
-      console.log('Dashboard - User not authenticated, redirecting to signin');
       router.push('/signin');
     }
   }, [status, router, session]);
 
   // Load profile data to get custom image
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.email) {
-      loadProfileData();
-    }
-  }, [status, session]);
-
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     try {
       const response = await fetch('/api/profile');
       if (response.ok) {
@@ -69,7 +60,36 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error loading profile data:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.email) {
+      loadProfileData();
+    }
+  }, [status, session, loadProfileData]);
+
+  // Reload profile data when the page becomes visible (user returns from other pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && status === 'authenticated' && session?.user?.email) {
+        loadProfileData();
+      }
+    };
+
+    const handleFocus = () => {
+      if (status === 'authenticated' && session?.user?.email) {
+        loadProfileData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [status, session, loadProfileData]);
 
   // Click outside handler
   useEffect(() => {
@@ -87,7 +107,7 @@ export default function Dashboard() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="gradient-bg flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
@@ -102,7 +122,7 @@ export default function Dashboard() {
   const displayName = profileData.displayName || session.user?.name || 'User';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="gradient-bg">
       {/* Header */}
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 relative z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -119,14 +139,17 @@ export default function Dashboard() {
               {/* Profile Dropdown */}
               <div className="relative z-50" ref={dropdownRef}>
                 <button
+                  type="button"
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   className="flex items-center gap-2 bg-black/20 hover:bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-600 flex items-center justify-center">
                     {displayImage ? (
-                      <img 
+                      <Image 
                         src={displayImage} 
                         alt="Profile" 
+                        width={32}
+                        height={32}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -159,6 +182,7 @@ export default function Dashboard() {
                       </Link>
                       <div className="border-t border-white/10 my-1"></div>
                       <button
+                        type="button"
                         onClick={() => {
                           setIsProfileDropdownOpen(false);
                           signOut({ callbackUrl: '/' });
@@ -242,8 +266,8 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-white text-sm">Updated 2h ago</p>
-                      <div className="w-24 bg-gray-700 rounded-full h-2 mt-2">
-                        <div className="bg-purple-500 h-2 rounded-full" style={{ width: '75%' }}></div>
+                      <div className="progress-bar">
+                        <div className="progress-fill-75"></div>
                       </div>
                     </div>
                   </div>
@@ -256,8 +280,8 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-white text-sm">Updated 1d ago</p>
-                      <div className="w-24 bg-gray-700 rounded-full h-2 mt-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: '90%' }}></div>
+                      <div className="progress-bar">
+                        <div className="progress-fill-90"></div>
                       </div>
                     </div>
                   </div>
@@ -270,8 +294,8 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-white text-sm">Updated 3d ago</p>
-                      <div className="w-24 bg-gray-700 rounded-full h-2 mt-2">
-                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: '45%' }}></div>
+                      <div className="progress-bar">
+                        <div className="progress-fill-45"></div>
                       </div>
                     </div>
                   </div>
@@ -289,7 +313,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1">
                     <p className="text-white text-sm"><span className="font-semibold">Sarah Chen</span> commented on your project</p>
-                    <p className="text-gray-400 text-xs">"Love the art style! Can't wait to play!"</p>
+                    <p className="text-gray-400 text-xs">&quot;Love the art style! Can&apos;t wait to play!&quot;</p>
                   </div>
                   <span className="text-gray-400 text-xs">5m ago</span>
                 </div>
@@ -337,11 +361,11 @@ export default function Dashboard() {
                   <FaUsers />
                   <span>Find Teammates</span>
                 </Link>
-                <button className="w-full flex items-center gap-3 p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                <button type="button" className="w-full flex items-center gap-3 p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                   <FaRocket />
                   <span>Launch Project</span>
                 </button>
-                <button className="w-full flex items-center gap-3 p-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+                <button type="button" className="w-full flex items-center gap-3 p-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
                   <FaTrophy />
                   <span>Join Contest</span>
                 </button>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { FaUpload, FaTimes, FaImage, FaSpinner } from 'react-icons/fa';
 
 interface UploadedImage {
@@ -138,6 +139,7 @@ export default function ImageUpload({
           type="file"
           multiple
           accept="image/jpeg,image/jpg,image/png,image/webp"
+          aria-label="Upload images"
           onChange={(e) => handleFileSelect(e.target.files)}
           className="hidden"
           disabled={isUploading}
@@ -194,13 +196,16 @@ export default function ImageUpload({
           {images.map((image, index) => (
             <div key={index} className="relative group">
               <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                <img
+                <Image
                   src={image}
                   alt={`Screenshot ${index + 1}`}
+                  width={300}
+                  height={200}
                   className="w-full h-full object-cover"
                 />
               </div>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   removeImage(index);

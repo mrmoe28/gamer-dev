@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom progress bar styles */
+@layer components {
+  /* Gradient background for all pages */
+  .gradient-bg {
+    @apply bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen;
+  }
+  
+  .progress-bar {
+    @apply w-24 bg-gray-700 rounded-full h-2 mt-2;
+  }
+  
+  .progress-fill-75 {
+    @apply bg-purple-500 h-2 rounded-full;
+    width: 75%;
+  }
+  
+  .progress-fill-90 {
+    @apply bg-green-500 h-2 rounded-full;
+    width: 90%;
+  }
+  
+  .progress-fill-45 {
+    @apply bg-blue-500 h-2 rounded-full;
+    width: 45%;
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { FaChevronLeft, FaChevronRight, FaTimes, FaExpand } from 'react-icons/fa';
 
 interface ImageGalleryProps {
@@ -42,9 +43,11 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
         {/* Main Image Display */}
         <div className="relative group">
           <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden">
-            <img
+            <Image
               src={images[currentIndex]}
               alt={`${title} ${currentIndex + 1}`}
+              width={800}
+              height={450}
               className="w-full h-full object-contain"
             />
           </div>
@@ -53,6 +56,7 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
           {images.length > 1 && (
             <>
               <button
+                type="button"
                 onClick={goToPrevious}
                 className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Previous image"
@@ -60,6 +64,7 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
                 <FaChevronLeft />
               </button>
               <button
+                type="button"
                 onClick={goToNext}
                 className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 aria-label="Next image"
@@ -71,6 +76,7 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
 
           {/* Fullscreen Button */}
           <button
+            type="button"
             onClick={toggleFullscreen}
             className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
             aria-label="View fullscreen"
@@ -89,17 +95,21 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
           <div className="flex gap-2 overflow-x-auto pb-2">
             {images.map((image, index) => (
               <button
+                type="button"
                 key={index}
                 onClick={() => goToSlide(index)}
+                aria-label={`Go to image ${index + 1}`}
                 className={`flex-shrink-0 w-24 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                   index === currentIndex
                     ? 'border-purple-500 scale-105'
                     : 'border-transparent opacity-70 hover:opacity-100'
                 }`}
               >
-                <img
+                <Image
                   src={image}
                   alt={`Thumbnail ${index + 1}`}
+                  width={96}
+                  height={64}
                   className="w-full h-full object-cover"
                 />
               </button>
@@ -115,6 +125,7 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
           onClick={toggleFullscreen}
         >
           <button
+            type="button"
             onClick={toggleFullscreen}
             className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-colors"
             aria-label="Close fullscreen"
@@ -122,9 +133,11 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
             <FaTimes />
           </button>
 
-          <img
+          <Image
             src={images[currentIndex]}
             alt={`${title} ${currentIndex + 1} - Fullscreen`}
+            width={1200}
+            height={800}
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}
           />
@@ -133,6 +146,7 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
           {images.length > 1 && (
             <>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   goToPrevious();
@@ -143,6 +157,7 @@ export default function ImageGallery({ images, title = 'Screenshots' }: ImageGal
                 <FaChevronLeft className="text-xl" />
               </button>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   goToNext();

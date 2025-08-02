@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -17,33 +18,13 @@ import {
   FaPalette,
   FaMusic,
   FaLightbulb,
-  FaUserPlus,
   FaEye,
   FaSpinner,
   FaExclamationCircle,
-  FaCheckCircle,
-  FaClock
+  FaClock,
+  FaUsers
 } from 'react-icons/fa';
-
-interface Developer {
-  id: string;
-  name: string | null;
-  email: string;
-  displayName: string | null;
-  bio: string | null;
-  location: string | null;
-  customImage: string | null;
-  image: string | null;
-  skills: string | null;
-  lookingForTeam: boolean;
-  availabilityStatus: string;
-  preferredRoles: string[] | null;
-  experience: string;
-  _count: {
-    ownedProjects: number;
-    projectMemberships: number;
-  };
-}
+import type { Developer } from '@/types';
 
 const availabilityColors = {
   available: 'bg-green-500',
@@ -86,7 +67,7 @@ const skillIcons: { [key: string]: any } = {
 };
 
 export default function FindTeammates() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,15 +78,7 @@ export default function FindTeammates() {
   const [selectedExperience, setSelectedExperience] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/signin');
-    } else if (status === 'authenticated') {
-      fetchDevelopers();
-    }
-  }, [status, router]);
-
-  const fetchDevelopers = async () => {
+  const fetchDevelopers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -126,7 +99,15 @@ export default function FindTeammates() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, selectedSkills, selectedAvailability, selectedExperience]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/signin');
+    } else if (status === 'authenticated') {
+      fetchDevelopers();
+    }
+  }, [status, router, fetchDevelopers]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -136,7 +117,7 @@ export default function FindTeammates() {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedSkills, selectedAvailability, selectedExperience]);
+  }, [searchQuery, selectedSkills, selectedAvailability, selectedExperience, status, fetchDevelopers]);
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev => 
@@ -144,31 +125,6 @@ export default function FindTeammates() {
         ? prev.filter(s => s !== skill)
         : [...prev, skill]
     );
-  };
-
-  const getAllSkills = () => {
-    const skillSet = new Set<string>();
-    developers.forEach(dev => {
-      if (dev.skills) {
-        try {
-          const skills = JSON.parse(dev.skills);
-          Object.keys(skills).forEach(skill => skillSet.add(skill));
-        } catch (e) {
-          // Handle invalid JSON
-        }
-      }
-    });
-    return Array.from(skillSet).sort();
-  };
-
-  const getSkillRating = (skills: string | null, skillName: string): number => {
-    if (!skills) return 0;
-    try {
-      const skillsObj = JSON.parse(skills);
-      return skillsObj[skillName] || 0;
-    } catch (e) {
-      return 0;
-    }
   };
 
   const getTopSkills = (skills: string | null, limit: number = 3) => {
@@ -186,7 +142,7 @@ export default function FindTeammates() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="gradient-bg flex items-center justify-center">
         <div className="flex items-center gap-3 text-white">
           <FaSpinner className="animate-spin text-2xl" />
           <span className="text-xl">Loading developers...</span>
@@ -196,7 +152,7 @@ export default function FindTeammates() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="gradient-bg">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -208,6 +164,7 @@ export default function FindTeammates() {
           <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold text-white">Find Teammates</h1>
             <button
+              type="button"
               onClick={() => setShowFilters(!showFilters)}
               className="lg:hidden flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
@@ -240,8 +197,9 @@ export default function FindTeammates() {
 
               {/* Availability Filter */}
               <div className="mb-6">
-                <label className="text-gray-300 text-sm mb-2 block">Availability</label>
+                <label htmlFor="availability-select" className="text-gray-300 text-sm mb-2 block">Availability</label>
                 <select
+                  id="availability-select"
                   value={selectedAvailability}
                   onChange={(e) => setSelectedAvailability(e.target.value)}
                   className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
@@ -255,8 +213,9 @@ export default function FindTeammates() {
 
               {/* Experience Filter */}
               <div className="mb-6">
-                <label className="text-gray-300 text-sm mb-2 block">Experience Level</label>
+                <label htmlFor="experience-select" className="text-gray-300 text-sm mb-2 block">Experience Level</label>
                 <select
+                  id="experience-select"
                   value={selectedExperience}
                   onChange={(e) => setSelectedExperience(e.target.value)}
                   className="w-full px-4 py-2 bg-black/30 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
@@ -315,9 +274,11 @@ export default function FindTeammates() {
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-16 h-16 rounded-full overflow-hidden bg-purple-600 flex items-center justify-center flex-shrink-0">
                           {displayImage ? (
-                            <img
+                            <Image
                               src={displayImage}
                               alt={displayName}
+                              width={64}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -402,7 +363,12 @@ export default function FindTeammates() {
                           <FaEye />
                           <span>View Profile</span>
                         </Link>
-                        <button className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <button 
+                          type="button" 
+                          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                          aria-label={`Send message to ${displayName}`}
+                          title={`Send message to ${displayName}`}
+                        >
                           <FaEnvelope />
                         </button>
                       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import {
   FaEdit,
   FaTrash,
   FaUserPlus,
+  FaUserMinus,
   FaGlobe,
   FaLock,
   FaUserFriends,
@@ -76,11 +77,7 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProject();
-  }, [params.slug]);
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${params.slug}`);
       if (!response.ok) {
@@ -100,11 +97,60 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.slug]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
 
   const handleJoinTeam = async () => {
-    // TODO: Implement join team functionality
-    alert('Join team functionality coming soon!');
+    try {
+      const response = await fetch(`/api/projects/${params.slug}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: 'Team Member', // Default role, could be customizable
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to join team');
+      }
+
+      // Refresh the project data to show updated team members
+      await fetchProject();
+      alert('Successfully joined the team!');
+    } catch (error) {
+      console.error('Error joining team:', error);
+      alert(error instanceof Error ? error.message : 'Failed to join team. Please try again.');
+    }
+  };
+
+  const handleLeaveTeam = async () => {
+    if (!confirm('Are you sure you want to leave this team?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${params.slug}/leave`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to leave team');
+      }
+
+      // Refresh the project data
+      await fetchProject();
+      alert('Successfully left the team');
+    } catch (error) {
+      console.error('Error leaving team:', error);
+      alert(error instanceof Error ? error.message : 'Failed to leave team. Please try again.');
+    }
   };
 
   const handleDelete = async () => {
@@ -153,7 +199,7 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="gradient-bg flex items-center justify-center">
         <div className="text-white text-xl">Loading project...</div>
       </div>
     );
@@ -161,7 +207,7 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="gradient-bg">
         <div className="container mx-auto px-4 py-8">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-6">
             <FaArrowLeft />
@@ -178,7 +224,7 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="gradient-bg">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -196,9 +242,11 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
               {project.coverImage && (
                 <div className="h-64 bg-black/20 relative">
-                  <img 
+                  <Image 
                     src={project.coverImage} 
                     alt={project.name}
+                    width={800}
+                    height={256}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -225,12 +273,17 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
                       <Link
                         href={`/projects/${project.slug}/edit`}
                         className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        aria-label="Edit project"
+                        title="Edit project"
                       >
                         <FaEdit />
                       </Link>
                       <button
+                        type="button"
                         onClick={handleDelete}
                         className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                        aria-label="Delete project"
+                        title="Delete project"
                       >
                         <FaTrash />
                       </button>
@@ -362,9 +415,11 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-purple-600 flex items-center justify-center">
                     {project.owner.image ? (
-                      <img
+                      <Image
                         src={project.owner.image}
                         alt={project.owner.displayName || project.owner.name || 'Owner'}
+                        width={40}
+                        height={40}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -386,9 +441,11 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
                   <div key={member.id} className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center">
                       {member.user.image ? (
-                        <img
+                        <Image
                           src={member.user.image}
                           alt={member.user.displayName || member.user.name || 'Member'}
+                          width={40}
+                          height={40}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -407,9 +464,22 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
                 ))}
               </div>
               
-              {/* Join Team Button */}
-              {project.lookingForTeam && !project.isOwner && !project.isMember && (
-                <div>
+              {/* Join/Leave Team Button */}
+              {project.lookingForTeam && !project.isOwner && (
+                <div>{project.isMember ? (
+                  <>
+                    <h3 className="text-lg font-semibold text-white mb-3">Team Actions</h3>
+                    <button
+                      type="button"
+                      onClick={handleLeaveTeam}
+                      className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg transition-colors mb-3"
+                    >
+                      <FaUserMinus />
+                      Leave Team
+                    </button>
+                  </>
+                ) : (
+                  <>
                   {project.rolesNeeded.length > 0 && (
                     <div className="mb-3">
                       <p className="text-gray-400 text-sm mb-2">Looking for:</p>
@@ -427,13 +497,15 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
                   )}
                   
                   <button
+                    type="button"
                     onClick={handleJoinTeam}
                     className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors"
                   >
                     <FaUserPlus />
                     Join Team
                   </button>
-                </div>
+                  </>
+                )}</div>
               )}
             </div>
 
@@ -443,10 +515,10 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
                 <h2 className="text-xl font-semibold text-white mb-4">Actions</h2>
                 
                 <div className="space-y-3">
-                  <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
+                  <button type="button" className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
                     Follow Project
                   </button>
-                  <button className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors">
+                  <button type="button" className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors">
                     <FaExternalLinkAlt />
                     Share
                   </button>
@@ -463,9 +535,11 @@ export default function ProjectPage({ params }: { params: { slug: string } }) {
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
-          <img
+          <Image
             src={selectedImage}
             alt="Screenshot"
+            width={800}
+            height={600}
             className="max-w-full max-h-full rounded-lg"
           />
         </div>

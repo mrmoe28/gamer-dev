@@ -21,18 +21,14 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
     signIn: "/signin",
   },
-  debug: true, // Enable debug mode to see detailed logs
+  debug: process.env.NODE_ENV === "development", // Enable debug mode in development only
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("SignIn callback triggered:", { 
-        user: user?.email, 
-        provider: account?.provider 
-      });
-      
       if (account?.provider === "google") {
         try {
           // Check if user exists in database
@@ -41,7 +37,6 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!existingUser) {
-            console.log("Creating new user:", user.email);
             // Create user if doesn't exist
             await prisma.user.create({
               data: {
@@ -50,22 +45,20 @@ export const authOptions: NextAuthOptions = {
                 image: user.image,
               },
             });
-          } else {
-            console.log("User already exists:", user.email);
           }
           return true;
         } catch (error) {
-          console.error("Error during sign in:", error);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error during sign in:", error);
+          }
           return false;
         }
       }
       return true;
     },
     async session({ session, token }) {
-      console.log("Session callback:", { 
-        userEmail: session.user?.email, 
-        tokenId: token.id 
-      });
+      console.log('Session callback - Token:', token?.email);
+      console.log('Session callback - Session user:', session?.user?.email);
       
       if (token && session.user) {
         session.user.id = token.id as string
@@ -76,15 +69,11 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async jwt({ token, user, account, profile }) {
-      console.log("JWT callback:", { 
-        userEmail: user?.email, 
-        accountProvider: account?.provider,
-        isNewUser: !!account
-      });
+      console.log('JWT callback - Token email:', token?.email);
+      console.log('JWT callback - User email:', user?.email);
       
       // Initial sign in
       if (account && user) {
-        console.log("Initial sign in, setting token data");
         token.id = user.id
         token.email = user.email
         token.name = user.name
@@ -99,12 +88,11 @@ export const authOptions: NextAuthOptions = {
             
             if (dbUser) {
               token.id = dbUser.id;
-              console.log("Existing user found:", dbUser.id);
-            } else {
-              console.log("User not found in DB, will create on next request");
             }
           } catch (error) {
-            console.error("Error fetching user from database:", error);
+            if (process.env.NODE_ENV === "development") {
+              console.error("Error fetching user from database:", error);
+            }
           }
         }
       }
@@ -112,8 +100,6 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async redirect({ url, baseUrl }) {
-      console.log("Redirect callback:", { url, baseUrl });
-      
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`
       // Allows callback URLs on the same origin

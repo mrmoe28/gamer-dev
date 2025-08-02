@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="gradient-bg">
       <Navigation />
       
       {/* Hero Section */}
@@ -34,7 +34,7 @@ export default function Home() {
               <Link href="/signin" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25">
                 Get Started Free
               </Link>
-              <button className="border border-purple-500/30 text-purple-300 hover:bg-purple-500/10 font-semibold py-4 px-8 rounded-xl transition-all duration-300">
+              <button type="button" className="border border-purple-500/30 text-purple-300 hover:bg-purple-500/10 font-semibold py-4 px-8 rounded-xl transition-all duration-300">
                 Watch Demo
               </button>
             </div>
@@ -110,8 +110,7 @@ export default function Home() {
               }
             ].map((feature, index) => (
               <div key={index} className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"
-                     style={{background: `linear-gradient(to right, var(--tw-gradient-stops))`}}></div>
+                <div className="absolute inset-0 bg-gradient-to-r opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl"></div>
                 <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all duration-300">
                   <div className={`inline-flex p-4 rounded-xl bg-gradient-to-r ${feature.color} mb-6`}>
                     <feature.icon className="text-white text-2xl" />
@@ -173,7 +172,7 @@ export default function Home() {
                 <p className="text-gray-300 text-sm mb-4">Working on: <span className="text-purple-400">{member.game}</span></p>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400 text-sm">{member.followers} followers</span>
-                  <button className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
+                  <button type="button" className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
                     Follow
                   </button>
                 </div>
@@ -204,19 +203,19 @@ export default function Home() {
             <Link href="/signin" className="bg-white text-purple-900 hover:bg-gray-100 font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
               Start Building Today
             </Link>
-            <button className="border border-white/30 text-white hover:bg-white/10 font-semibold py-4 px-8 rounded-xl transition-all duration-300">
+            <button type="button" className="border border-white/30 text-white hover:bg-white/10 font-semibold py-4 px-8 rounded-xl transition-all duration-300">
               Learn More
             </button>
           </div>
           
           <div className="flex justify-center items-center gap-8 text-gray-400">
-            <a href="#" className="hover:text-purple-400 transition-colors">
+            <a href="#" className="hover:text-purple-400 transition-colors" aria-label="Join our Discord" title="Join our Discord">
               <FaDiscord className="text-2xl" />
             </a>
-            <a href="#" className="hover:text-purple-400 transition-colors">
+            <a href="#" className="hover:text-purple-400 transition-colors" aria-label="Follow us on Twitter" title="Follow us on Twitter">
               <FaTwitter className="text-2xl" />
             </a>
-            <a href="#" className="hover:text-purple-400 transition-colors">
+            <a href="#" className="hover:text-purple-400 transition-colors" aria-label="View our GitHub" title="View our GitHub">
               <FaGithub className="text-2xl" />
             </a>
           </div>

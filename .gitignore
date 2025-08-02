@@ -44,3 +44,16 @@ prisma/dev.db
 # uploaded files
 /public/uploads/screenshots/*
 !/public/uploads/screenshots/.gitkeep
+/public/uploads/profiles/*
+!/public/uploads/profiles/.gitkeep
+
+# documentation files (exclude from deployment)
+README.md
+*.md
+!package.json
+!package-lock.json
+# Deployment files (exclude from repository)
+DEPLOYMENT.md
+DEPLOYMENT_CHECKLIST.md
+env.template
+scripts/deploy.sh

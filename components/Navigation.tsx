@@ -80,6 +80,7 @@ export default function Navigation() {
             {session ? (
               <>
                 <button
+                  type="button"
                   onClick={() => signOut({ callbackUrl: '/' })}
                   className="flex items-center gap-2 text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/50 px-4 py-2 rounded-lg transition-all"
                 >
@@ -87,72 +88,74 @@ export default function Navigation() {
                   <span>Sign Out</span>
                 </button>
                 <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                  className="flex items-center gap-2 bg-black/20 hover:bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white transition-colors"
-                >
-                  {session.user?.image ? (
-                    <Image 
-                      src={session.user.image} 
-                      alt="Profile" 
-                      width={32} 
-                      height={32} 
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-medium">
-                      {session.user?.name?.[0] || 'U'}
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center gap-2 bg-black/20 hover:bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white transition-colors"
+                  >
+                    {session.user?.image ? (
+                      <Image 
+                        src={session.user.image} 
+                        alt="Profile" 
+                        width={32} 
+                        height={32} 
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-medium">
+                        {session.user?.name?.[0] || 'U'}
+                      </div>
+                    )}
+                    <span className="font-medium">{session.user?.name || 'User'}</span>
+                    <svg className={`w-4 h-4 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                
+                  {/* Profile Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-black/90 backdrop-blur-md border border-white/10 rounded-lg shadow-lg z-50">
+                      <div className="py-1">
+                        <Link
+                          href="/dashboard"
+                          className="flex items-center gap-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <FaGamepad />
+                          <span>Dashboard</span>
+                        </Link>
+                        <Link
+                          href="/profile"
+                          className="flex items-center gap-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <FaUser />
+                          <span>Profile Settings</span>
+                        </Link>
+                        <Link
+                          href="/settings"
+                          className="flex items-center gap-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <FaCog />
+                          <span>Account Settings</span>
+                        </Link>
+                        <div className="border-t border-white/10 my-1"></div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            signOut({ callbackUrl: '/' });
+                          }}
+                          className="flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
+                        >
+                          <FaSignOutAlt />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
                     </div>
                   )}
-                  <span className="font-medium">{session.user?.name || 'User'}</span>
-                  <svg className={`w-4 h-4 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {/* Profile Dropdown Menu */}
-                {isProfileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-black/90 backdrop-blur-md border border-white/10 rounded-lg shadow-lg z-50">
-                    <div className="py-1">
-                      <Link
-                        href="/dashboard"
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <FaGamepad />
-                        <span>Dashboard</span>
-                      </Link>
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <FaUser />
-                        <span>Profile Settings</span>
-                      </Link>
-                      <Link
-                        href="/settings"
-                        className="flex items-center gap-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                      >
-                        <FaCog />
-                        <span>Account Settings</span>
-                      </Link>
-                      <div className="border-t border-white/10 my-1"></div>
-                      <button
-                        onClick={() => {
-                          setIsProfileDropdownOpen(false);
-                          signOut({ callbackUrl: '/' });
-                        }}
-                        className="flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-500/10 transition-colors w-full text-left"
-                      >
-                        <FaSignOutAlt />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
               </>
             ) : status === 'loading' && !isLandingPage ? (
               <div className="text-gray-300">Loading...</div>
@@ -170,6 +173,7 @@ export default function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
+            type="button"
             className="md:hidden text-gray-300 hover:text-white transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
@@ -238,6 +242,7 @@ export default function Navigation() {
                       Account Settings
                     </Link>
                     <button
+                      type="button"
                       onClick={() => signOut({ callbackUrl: '/' })}
                       className="text-red-400 hover:text-red-300 transition-colors text-left"
                     >

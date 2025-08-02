@@ -2,11 +2,11 @@
 
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { FaGoogle, FaGamepad, FaArrowLeft, FaExclamationTriangle } from 'react-icons/fa';
 import Link from 'next/link';
 
-export default function SignIn() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -17,18 +17,15 @@ export default function SignIn() {
     // Check for error in URL params
     const error = searchParams.get('error');
     if (error) {
-      console.log('Auth error from URL:', error);
       setError(`Authentication failed: ${error}`);
     }
     
     // Check if user is already authenticated
     const checkSession = async () => {
       const session = await getSession();
-      console.log('Initial session check:', session);
       
       if (session) {
         setIsAuthenticated(true);
-        console.log('User already authenticated, redirecting to dashboard...');
         router.replace('/dashboard');
       }
     };
@@ -41,7 +38,6 @@ export default function SignIn() {
     setError(null);
     
     try {
-      console.log('Starting Google sign in...');
       // Let NextAuth handle the entire flow including redirect
       await signIn('google', { 
         callbackUrl: '/dashboard'
@@ -56,7 +52,7 @@ export default function SignIn() {
 
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="gradient-bg flex items-center justify-center">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
           <p>Redirecting to dashboard...</p>
@@ -66,7 +62,7 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="gradient-bg">
       {/* Back to Home Link */}
       <div className="absolute top-6 left-6 z-10">
         <Link 
@@ -111,6 +107,7 @@ export default function SignIn() {
 
             {/* Google Sign In Button */}
             <button
+              type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 hover:bg-gray-100 font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
@@ -157,5 +154,20 @@ export default function SignIn() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <div className="gradient-bg flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 } 

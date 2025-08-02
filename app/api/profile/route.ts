@@ -6,8 +6,10 @@ import { prisma } from '@/lib/db/prisma';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
+    console.log('Profile API - Session:', session?.user?.email);
     
     if (!session?.user?.email) {
+      console.log('Profile API - No session or email found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,18 +27,30 @@ export async function GET() {
         customImage: true,
         skills: true,
         socialLinks: true,
+        lookingForTeam: true,
+        availabilityStatus: true,
+        preferredRoles: true,
+        experience: true,
         createdAt: true,
         updatedAt: true,
       },
     });
 
-    // If user doesn't exist, create them
+    // If user doesn't exist, create them with default values
     if (!user) {
       user = await prisma.user.create({
         data: {
           email: session.user.email,
           name: session.user.name,
           image: session.user.image,
+          skills: JSON.stringify({ programming: 4, art: 3, audio: 2 }),
+          socialLinks: JSON.stringify({
+            github: '',
+            twitter: '',
+            linkedin: '',
+            portfolio: ''
+          }),
+          preferredRoles: JSON.stringify([]),
         },
         select: {
           id: true,
@@ -50,10 +64,19 @@ export async function GET() {
           customImage: true,
           skills: true,
           socialLinks: true,
+          lookingForTeam: true,
+          availabilityStatus: true,
+          preferredRoles: true,
+          experience: true,
           createdAt: true,
           updatedAt: true,
         },
       });
+    }
+
+    // Handle null case (TypeScript safety)
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Parse JSON fields
@@ -66,6 +89,7 @@ export async function GET() {
         linkedin: '',
         portfolio: ''
       },
+      preferredRoles: user.preferredRoles ? JSON.parse(user.preferredRoles) : [],
     };
 
     return NextResponse.json(profile);
@@ -89,9 +113,11 @@ export async function PUT(request: NextRequest) {
       bio,
       location,
       website,
-      customImage,
       skills,
       socialLinks,
+      preferredRoles,
+      lookingForTeam,
+      availabilityStatus,
     } = body;
 
     // Validate skills object
@@ -104,33 +130,34 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Check if user exists, if not create them
-    let user = await prisma.user.findUnique({
+    // Update user profile using upsert to handle both create and update
+    const updatedUser = await prisma.user.upsert({
       where: { email: session.user.email },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: session.user.email,
-          name: session.user.name,
-          image: session.user.image,
-        },
-      });
-    }
-
-    // Update user profile
-    const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
-      data: {
+      update: {
         displayName: displayName || null,
         bio: bio || null,
         location: location || null,
         website: website || null,
-        customImage: customImage || null,
         skills: skills ? JSON.stringify(skills) : null,
         socialLinks: socialLinks ? JSON.stringify(socialLinks) : null,
+        preferredRoles: preferredRoles ? JSON.stringify(preferredRoles) : JSON.stringify([]),
+        lookingForTeam: lookingForTeam !== undefined ? lookingForTeam : false,
+        availabilityStatus: availabilityStatus || "available",
         updatedAt: new Date(),
+      },
+      create: {
+        email: session.user.email,
+        name: session.user.name,
+        image: session.user.image,
+        displayName: displayName || null,
+        bio: bio || null,
+        location: location || null,
+        website: website || null,
+        skills: skills ? JSON.stringify(skills) : null,
+        socialLinks: socialLinks ? JSON.stringify(socialLinks) : null,
+        preferredRoles: preferredRoles ? JSON.stringify(preferredRoles) : JSON.stringify([]),
+        lookingForTeam: lookingForTeam !== undefined ? lookingForTeam : false,
+        availabilityStatus: availabilityStatus || "available",
       },
       select: {
         id: true,
@@ -144,6 +171,10 @@ export async function PUT(request: NextRequest) {
         customImage: true,
         skills: true,
         socialLinks: true,
+        lookingForTeam: true,
+        availabilityStatus: true,
+        preferredRoles: true,
+        experience: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -159,6 +190,7 @@ export async function PUT(request: NextRequest) {
         linkedin: '',
         portfolio: ''
       },
+      preferredRoles: updatedUser.preferredRoles ? JSON.parse(updatedUser.preferredRoles) : [],
     };
 
     return NextResponse.json(profile);

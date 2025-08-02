@@ -50,6 +50,23 @@ model User {
   availabilityStatus String         @default("available") // available, busy, open_to_offers
   preferredRoles   String?          // JSON array
   experience       String           @default("intermediate") // beginner, intermediate, expert
+  
+  // Privacy settings
+  profileVisibility String          @default("public") // public, private, teammates
+  showEmail        Boolean          @default(false)
+  activityVisibility Boolean        @default(true)
+  
+  // Notification settings
+  emailNotifications Boolean        @default(true)
+  teamInviteNotifications Boolean   @default(true)
+  projectUpdateNotifications Boolean @default(true)
+  newsletterSubscription Boolean    @default(false)
+  
+  // Preferences
+  theme            String           @default("dark") // dark, light, system
+  language         String           @default("en")
+  timezone         String           @default("UTC")
+  
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   accounts         Account[]

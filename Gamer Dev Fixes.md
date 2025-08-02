@@ -1,35 +1,42 @@
 # Gamer Dev - Error Fixes Summary
 
 ## Overview
+
 This document summarizes all the errors encountered and successfully resolved during the development of the Gamer Dev social media hub application. The project is a Next.js application with Google OAuth authentication, Prisma database integration, and profile management features.
 
 ## 🚨 Critical Errors Fixed
 
 ### 1. NextAuth.js Version Compatibility Issues
+
 **Problem:** NextAuth v5 beta was causing compatibility issues with the Prisma adapter and React components.
 
 **Error Messages:**
-```
+
+```bash
 ⨯ ./node_modules/next-auth/react.js
 Error: Failed to read source code from /Users/ekodevapps/Desktop/Gamer Dev/node_modules/next-auth/react.js
 Caused by: No such file or directory (os error 2)
 ```
 
 **Solution:**
+
 - Downgraded NextAuth from v5 beta to stable v4.24.5
 - Updated Prisma adapter to compatible version 1.0.12
 - Fixed import statements in auth configuration
 
 **Files Modified:**
+
 - `package.json` - Updated dependencies
 - `lib/auth/auth-options.ts` - Fixed NextAuth configuration
 - `app/api/auth/[...nextauth]/route.ts` - Corrected handler exports
 
 ### 2. Database Schema Configuration Error
+
 **Problem:** Prisma schema was configured for PostgreSQL but using SQLite database URL.
 
 **Error Messages:**
-```
+
+```bash
 error: Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`.
   -->  schema.prisma:7
    | 
@@ -38,80 +45,98 @@ error: Error validating datasource `db`: the URL must start with the protocol `p
 ```
 
 **Solution:**
+
 - Changed Prisma schema provider from `postgresql` to `sqlite`
 - Updated database URL to use SQLite format
 - Added custom profile fields to User model
 
 **Files Modified:**
+
 - `prisma/schema.prisma` - Updated datasource provider and extended User model
 
 ### 3. Route Conflict Error
+
 **Problem:** Duplicate dashboard pages causing Next.js routing conflicts.
 
 **Error Messages:**
-```
+
+```bash
 ⨯ app/dashboard/page.tsx
 You cannot have two parallel pages that resolve to the same path. Please check /(protected)/dashboard/page and /dashboard/page.
 ```
 
 **Solution:**
+
 - Removed duplicate dashboard page
 - Kept only the protected route version
 - Ensured proper route group structure
 
 **Files Modified:**
+
 - Deleted `app/dashboard/page.tsx`
 - Kept `app/(protected)/dashboard/page.tsx`
 
 ### 4. Middleware Export Error
+
 **Problem:** NextAuth middleware was causing export errors and not needed for initial setup.
 
 **Error Messages:**
-```
+
+```javascript
 TypeError: r is not a function
 ```
 
 **Solution:**
+
 - Removed middleware.ts file entirely
 - Simplified authentication setup without middleware
 - Focused on core authentication functionality
 
 **Files Modified:**
+
 - Deleted `middleware.ts`
 
 ### 5. JWT Session Decryption Errors
+
 **Problem:** JWT tokens were failing to decrypt due to configuration issues.
 
 **Error Messages:**
-```
+
+```bash
 [next-auth][error][JWT_SESSION_ERROR] 
 decryption operation failed
 ```
 
 **Solution:**
+
 - Fixed NextAuth configuration with proper JWT strategy
 - Updated session callbacks
 - Ensured proper environment variable setup
 
 **Files Modified:**
+
 - `lib/auth/auth-options.ts` - Updated session and JWT callbacks
 
 ### 6. Profile Image Auto-Save Implementation
+
 **Problem:** Profile images were not automatically saving and not displaying in dashboard.
 
 **Error Messages:**
-```
+
+```bash
 Error updating profile: PrismaClientKnownRequestError: 
 Record to update not found.
 ```
 
 **Solution:**
+
 - Implemented auto-save functionality for profile images
 - Added loading states and success/error feedback
 - Updated dashboard to fetch and display custom profile images
 - Fixed API route to handle user updates properly
 
 **Files Modified:**
+
 - `app/(protected)/profile/page.tsx` - Added auto-save logic
 - `app/(protected)/dashboard/page.tsx` - Added profile data fetching
 - `app/api/profile/route.ts` - Fixed user update logic
@@ -119,6 +144,7 @@ Record to update not found.
 ## 🔧 Technical Fixes Applied
 
 ### Authentication Flow
+
 1. **Google OAuth Setup**
    - Configured Google Client ID and Secret
    - Set up proper redirect URLs
@@ -135,6 +161,7 @@ Record to update not found.
    - Implemented profile data storage
 
 ### Profile Management System
+
 1. **Image Upload**
    - Implemented base64 image storage
    - Added auto-save functionality
@@ -153,6 +180,7 @@ Record to update not found.
 ## 📁 File Structure Changes
 
 ### Added Files
+
 - `app/signin/page.tsx` - Google sign-in page
 - `app/(protected)/dashboard/page.tsx` - Protected dashboard
 - `app/(protected)/profile/page.tsx` - Profile settings page
@@ -160,6 +188,7 @@ Record to update not found.
 - `components/Navigation.tsx` - Site navigation component
 
 ### Modified Files
+
 - `package.json` - Updated dependencies
 - `prisma/schema.prisma` - Database schema
 - `lib/auth/auth-options.ts` - Auth configuration
@@ -168,30 +197,35 @@ Record to update not found.
 - `app/page.tsx` - Landing page
 
 ### Deleted Files
+
 - `middleware.ts` - Removed to fix export errors
 - `app/dashboard/page.tsx` - Removed duplicate route
 
 ## 🎯 Key Learnings
 
 ### NextAuth.js Best Practices
+
 1. Use stable versions (v4) over beta versions (v5)
 2. Properly configure JWT strategy for session management
 3. Set up correct environment variables
 4. Handle authentication callbacks properly
 
 ### Database Management
+
 1. Ensure schema provider matches database URL
 2. Use appropriate database for development (SQLite) vs production (PostgreSQL)
 3. Implement proper error handling for database operations
 4. Set up proper user model with custom fields
 
 ### Next.js App Router
+
 1. Avoid duplicate routes in different directories
 2. Use route groups for organization
 3. Implement proper client/server component separation
 4. Handle API routes correctly
 
 ### User Experience
+
 1. Implement auto-save for better UX
 2. Add loading states and feedback
 3. Ensure data consistency across components
@@ -200,6 +234,7 @@ Record to update not found.
 ## 🚀 Current Status
 
 The application now successfully:
+
 - ✅ Authenticates users with Google OAuth
 - ✅ Stores and retrieves profile data
 - ✅ Auto-saves profile images
@@ -232,4 +267,4 @@ The application now successfully:
 
 ---
 
-*This document serves as a reference for the development team and future maintenance of the Gamer Dev application.* 
+*This document serves as a reference for the development team and future maintenance of the Gamer Dev application.*

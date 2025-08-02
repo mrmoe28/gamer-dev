@@ -13,10 +13,10 @@ export function LoginButton() {
     return (
       <>
         Signed in as {session.user?.email}
-        <button onClick={() => signOut()}>Sign out</button>
+        <button type="button" onClick={() => signOut()}>Sign out</button>
       </>
     )
   }
   
-  return <button onClick={() => signIn('google')}>Sign in with Google</button>
+  return <button type="button" onClick={() => signIn('google')}>Sign in with Google</button>
 }

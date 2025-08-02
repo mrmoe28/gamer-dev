@@ -1,0 +1,569 @@
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { 
+  FaArrowLeft, 
+  FaSave, 
+  FaShieldAlt,
+  FaLock,
+  FaBell,
+  FaUserShield,
+  FaTrash,
+  FaDownload,
+  FaPalette,
+  FaGlobe,
+  FaClock,
+  FaExclamationTriangle,
+  FaGoogle
+} from 'react-icons/fa';
+import Link from 'next/link';
+
+interface AccountSettings {
+  // Privacy settings
+  profileVisibility: 'public' | 'private' | 'teammates';
+  showEmail: boolean;
+  activityVisibility: boolean;
+  
+  // Notification settings
+  emailNotifications: boolean;
+  teamInviteNotifications: boolean;
+  projectUpdateNotifications: boolean;
+  newsletterSubscription: boolean;
+  
+  // Preferences
+  theme: 'dark' | 'light' | 'system';
+  language: string;
+  timezone: string;
+}
+
+interface ConnectedAccount {
+  provider: string;
+  email?: string;
+  connectedAt: string;
+}
+
+export default function AccountSettings() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  
+  const [settings, setSettings] = useState<AccountSettings>({
+    profileVisibility: 'public',
+    showEmail: false,
+    activityVisibility: true,
+    emailNotifications: true,
+    teamInviteNotifications: true,
+    projectUpdateNotifications: true,
+    newsletterSubscription: false,
+    theme: 'dark',
+    language: 'en',
+    timezone: 'UTC'
+  });
+  
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/signin');
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      loadAccountSettings();
+    }
+  }, [status, session]);
+
+  const loadAccountSettings = async () => {
+    try {
+      setIsLoadingSettings(true);
+      const response = await fetch('/api/settings', {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data.settings || settings);
+        setConnectedAccounts(data.connectedAccounts || []);
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
+
+  const handleSaveSection = async (section: string) => {
+    setIsLoading(true);
+    setSaveMessage('');
+    
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          section,
+          settings
+        }),
+      });
+
+      if (response.ok) {
+        setSaveMessage(`${section} settings saved successfully!`);
+        setTimeout(() => setSaveMessage(''), 3000);
+      } else {
+        setSaveMessage('Error saving settings. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSaveMessage('Error saving settings. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE MY ACCOUNT') {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/settings/delete-account', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        router.push('/');
+      } else {
+        setSaveMessage('Error deleting account. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setSaveMessage('Error deleting account. Please try again.');
+    }
+  };
+
+  if (status === 'loading' || isLoadingSettings) {
+    return (
+      <div className="gradient-bg flex items-center justify-center">
+        <div className="text-white text-xl">Loading settings...</div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  return (
+    <div className="gradient-bg min-h-screen">
+      {/* Header */}
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center gap-3">
+              <Link href="/dashboard" className="flex items-center gap-2 text-white hover:text-purple-400 transition-colors">
+                <FaArrowLeft />
+                <span>Back to Dashboard</span>
+              </Link>
+            </div>
+            <h1 className="text-white font-bold text-xl">Account Settings</h1>
+            <div className="w-32"></div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Save Message */}
+        {saveMessage && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            saveMessage.includes('Error') 
+              ? 'bg-red-600/20 border border-red-500/30 text-red-400' 
+              : 'bg-green-600/20 border border-green-500/30 text-green-400'
+          }`}>
+            {saveMessage}
+          </div>
+        )}
+
+        <div className="space-y-8">
+          {/* Account Information */}
+          <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-xl p-6">
+            <h2 className="text-white text-xl font-bold mb-6 flex items-center gap-2">
+              <FaShieldAlt className="text-purple-400" />
+              Account Information
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-1">Email Address</label>
+                <p className="text-white">{session.user.email}</p>
+              </div>
+              
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-1">Account Created</label>
+                <p className="text-white">{new Date().toLocaleDateString()}</p>
+              </div>
+              
+              <div>
+                <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                  <FaGoogle className="text-blue-500" />
+                  Connected Accounts
+                </h3>
+                {connectedAccounts.map((account, index) => (
+                  <div key={index} className="flex items-center justify-between bg-black/20 border border-white/10 rounded-lg p-3">
+                    <div>
+                      <p className="text-white capitalize">{account.provider}</p>
+                      <p className="text-gray-400 text-sm">{account.email}</p>
+                    </div>
+                    <span className="text-green-400 text-sm">Connected</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy Settings */}
+          <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-xl p-6">
+            <h2 className="text-white text-xl font-bold mb-6 flex items-center gap-2">
+              <FaUserShield className="text-purple-400" />
+              Privacy Settings
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="profile-visibility" className="block text-gray-400 text-sm font-medium mb-2">Profile Visibility</label>
+                <select
+                  id="profile-visibility"
+                  value={settings.profileVisibility}
+                  onChange={(e) => setSettings({...settings, profileVisibility: e.target.value as any})}
+                  className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                  aria-label="Profile visibility setting"
+                >
+                  <option value="public">Public - Anyone can view</option>
+                  <option value="teammates">Teammates Only - Only team members can view</option>
+                  <option value="private">Private - Only you can view</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-white font-medium">Show Email Address</label>
+                  <p className="text-gray-400 text-sm">Allow other users to see your email</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings({...settings, showEmail: !settings.showEmail})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings.showEmail ? 'bg-purple-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.showEmail ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-white font-medium">Activity Visibility</label>
+                  <p className="text-gray-400 text-sm">Show your activity on projects and teams</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings({...settings, activityVisibility: !settings.activityVisibility})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings.activityVisibility ? 'bg-purple-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.activityVisibility ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => handleSaveSection('Privacy')}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <FaSave />
+                  {isLoading ? 'Saving...' : 'Save Privacy Settings'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Notification Settings */}
+          <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-xl p-6">
+            <h2 className="text-white text-xl font-bold mb-6 flex items-center gap-2">
+              <FaBell className="text-purple-400" />
+              Notification Settings
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-white font-medium">Email Notifications</label>
+                  <p className="text-gray-400 text-sm">Receive important updates via email</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings({...settings, emailNotifications: !settings.emailNotifications})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings.emailNotifications ? 'bg-purple-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.emailNotifications ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-white font-medium">Team Invites</label>
+                  <p className="text-gray-400 text-sm">Get notified when invited to join a team</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings({...settings, teamInviteNotifications: !settings.teamInviteNotifications})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings.teamInviteNotifications ? 'bg-purple-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.teamInviteNotifications ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-white font-medium">Project Updates</label>
+                  <p className="text-gray-400 text-sm">Updates about projects you&apos;re involved in</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings({...settings, projectUpdateNotifications: !settings.projectUpdateNotifications})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings.projectUpdateNotifications ? 'bg-purple-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.projectUpdateNotifications ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-white font-medium">Newsletter</label>
+                  <p className="text-gray-400 text-sm">Monthly updates about Gamer Dev features</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSettings({...settings, newsletterSubscription: !settings.newsletterSubscription})}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    settings.newsletterSubscription ? 'bg-purple-600' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.newsletterSubscription ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => handleSaveSection('Notifications')}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <FaSave />
+                  {isLoading ? 'Saving...' : 'Save Notification Settings'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Preferences */}
+          <div className="bg-black/20 backdrop-blur-md border border-white/10 rounded-xl p-6">
+            <h2 className="text-white text-xl font-bold mb-6 flex items-center gap-2">
+              <FaPalette className="text-purple-400" />
+              Preferences
+            </h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-2">Theme</label>
+                <select
+                  value={settings.theme}
+                  onChange={(e) => setSettings({...settings, theme: e.target.value as any})}
+                  className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="dark">Dark Mode</option>
+                  <option value="light">Light Mode</option>
+                  <option value="system">System Default</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-2">Language</label>
+                <select
+                  value={settings.language}
+                  onChange={(e) => setSettings({...settings, language: e.target.value})}
+                  className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="ja">日本語</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-gray-400 text-sm font-medium mb-2">Timezone</label>
+                <select
+                  value={settings.timezone}
+                  onChange={(e) => setSettings({...settings, timezone: e.target.value})}
+                  className="w-full px-4 py-2 bg-black/20 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="UTC">UTC (Coordinated Universal Time)</option>
+                  <option value="America/New_York">Eastern Time (US & Canada)</option>
+                  <option value="America/Chicago">Central Time (US & Canada)</option>
+                  <option value="America/Denver">Mountain Time (US & Canada)</option>
+                  <option value="America/Los_Angeles">Pacific Time (US & Canada)</option>
+                  <option value="Europe/London">London</option>
+                  <option value="Europe/Paris">Paris</option>
+                  <option value="Asia/Tokyo">Tokyo</option>
+                </select>
+              </div>
+              
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => handleSaveSection('Preferences')}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <FaSave />
+                  {isLoading ? 'Saving...' : 'Save Preferences'}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div className="bg-red-900/20 backdrop-blur-md border border-red-500/30 rounded-xl p-6">
+            <h2 className="text-red-400 text-xl font-bold mb-6 flex items-center gap-2">
+              <FaExclamationTriangle />
+              Danger Zone
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-black/20 border border-white/10 rounded-lg p-4">
+                <div>
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <FaDownload />
+                    Download Account Data
+                  </h3>
+                  <p className="text-gray-400 text-sm">Download all your data in JSON format</p>
+                </div>
+                <button
+                  type="button"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  Download Data
+                </button>
+              </div>
+              
+              <div className="border-t border-red-500/30 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-white font-medium flex items-center gap-2">
+                      <FaTrash />
+                      Delete Account
+                    </h3>
+                    <p className="text-gray-400 text-sm">Permanently delete your account and all data</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Delete Account
+                  </button>
+                </div>
+                
+                {showDeleteConfirm && (
+                  <div className="mt-4 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
+                    <p className="text-red-400 font-medium mb-2">Are you absolutely sure?</p>
+                    <p className="text-gray-300 text-sm mb-4">
+                      This action cannot be undone. This will permanently delete your account,
+                      remove you from all teams, and delete all your projects.
+                    </p>
+                    <p className="text-gray-300 text-sm mb-4">
+                      Please type <span className="font-mono font-bold text-red-400">DELETE MY ACCOUNT</span> to confirm.
+                    </p>
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      className="w-full px-4 py-2 bg-black/20 border border-red-500/50 rounded-lg text-white mb-4 focus:outline-none focus:border-red-400"
+                      placeholder="Type DELETE MY ACCOUNT"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDeleteConfirm(false);
+                          setDeleteConfirmText('');
+                        }}
+                        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteAccount}
+                        disabled={deleteConfirmText !== 'DELETE MY ACCOUNT'}
+                        className="bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        I understand, delete my account
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

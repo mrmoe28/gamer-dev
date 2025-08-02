@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -143,15 +144,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/signin');
-    } else if (status === 'authenticated') {
-      fetchUserProfile();
-    }
-  }, [status, params.id, router]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/users/${params.id}`);
@@ -171,7 +164,15 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/signin');
+    } else if (status === 'authenticated') {
+      fetchUserProfile();
+    }
+  }, [status, params.id, router, fetchUserProfile]);
 
   const getStageColor = (stage: string) => {
     const colors = {
@@ -186,7 +187,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="gradient-bg flex items-center justify-center">
         <div className="flex items-center gap-3 text-white">
           <FaSpinner className="animate-spin text-2xl" />
           <span className="text-xl">Loading profile...</span>
@@ -197,7 +198,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="gradient-bg">
         <div className="container mx-auto px-4 py-8">
           <Link href="/teammates" className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-6">
             <FaArrowLeft />
@@ -220,7 +221,7 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
   const memberSince = new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="gradient-bg">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -238,9 +239,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
               <div className="flex justify-center mb-6">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-purple-600 flex items-center justify-center">
                   {displayImage ? (
-                    <img
+                    <Image
                       src={displayImage}
                       alt={displayName}
+                      width={128}
+                      height={128}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -318,6 +321,8 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                           target="_blank"
                           rel="noopener noreferrer"
                           className="w-10 h-10 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 rounded-lg flex items-center justify-center text-purple-400 hover:text-purple-300 transition-all"
+                          aria-label={`Visit ${displayName} on ${platform}`}
+                          title={`Visit ${displayName} on ${platform}`}
                         >
                           <Icon className="text-lg" />
                         </a>
@@ -339,12 +344,12 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                   </Link>
                 ) : (
                   <>
-                    <button className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors">
+                    <button type="button" className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors">
                       <FaEnvelope />
                       <span>Send Message</span>
                     </button>
                     {profile.lookingForTeam && (
-                      <button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
+                      <button type="button" className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
                         <FaUsers />
                         <span>Invite to Team</span>
                       </button>
@@ -424,9 +429,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                       >
                         {project.coverImage && (
                           <div className="h-32 bg-black/20">
-                            <img
+                            <Image
                               src={project.coverImage}
                               alt={project.name}
+                              width={400}
+                              height={128}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -467,9 +474,11 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                       >
                         {membership.project.coverImage && (
                           <div className="h-32 bg-black/20">
-                            <img
+                            <Image
                               src={membership.project.coverImage}
                               alt={membership.project.name}
+                              width={400}
+                              height={128}
                               className="w-full h-full object-cover"
                             />
                           </div>
